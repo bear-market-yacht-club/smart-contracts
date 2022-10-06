@@ -6,6 +6,7 @@ import "@chainlink/contracts/src/v0.8/VRFV2WrapperConsumerBase.sol";
 
 contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
     struct Giveaway {
+        string participants_list_link;
         uint256 proof;
         uint64 num_participants;
         uint64 winner;
@@ -50,12 +51,15 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
     /**
      * create a future giveaway with proof of the list of participants using keccak256
      */
-    function create_giveaway(uint proof, uint64 num_participants)
-        external
-        onlyOwner
-    {
+    function create_giveaway(
+        string calldata participants_list_link,
+        uint proof,
+        uint64 num_participants
+    ) external onlyOwner {
         emit GiveawayCreated(s_giveaways.length);
-        s_giveaways.push(Giveaway(proof, num_participants, 0, false));
+        s_giveaways.push(
+            Giveaway(participants_list_link, proof, num_participants, 0, false)
+        );
     }
 
     /**
