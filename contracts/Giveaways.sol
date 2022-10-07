@@ -6,7 +6,7 @@ import "@chainlink/contracts/src/v0.8/VRFV2WrapperConsumerBase.sol";
 
 contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
     struct Giveaway {
-        string participants_list_link;
+        string description;
         uint256 proof;
         uint64 num_participants;
         uint64 winner;
@@ -15,6 +15,9 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
 
     Giveaway[] public s_giveaways;
     uint public s_current_giveaway;
+
+    string public s_link_prefix;
+    string public s_link_suffix;
 
     // VRF
     struct RequestStatus {
@@ -40,10 +43,14 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
     event GiveawayCreated(uint giveaway_number);
     event GiveawayFinished(uint giveaway_number, uint winner);
 
-    constructor(address _link, address _wrapper)
-        ConfirmedOwner(msg.sender)
-        VRFV2WrapperConsumerBase(_link, _wrapper)
-    {
+    constructor(
+        string memory link_prefix,
+        string memory link_suffix,
+        address _link,
+        address _wrapper
+    ) ConfirmedOwner(msg.sender) VRFV2WrapperConsumerBase(_link, _wrapper) {
+        s_link_prefix = link_prefix;
+        s_link_suffix = link_suffix;
         s_linkAddress = _link;
         s_wrapperAddress = _wrapper;
     }
@@ -52,13 +59,13 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
      * create a future giveaway with proof of the list of participants using keccak256
      */
     function create_giveaway(
-        string calldata participants_list_link,
+        string calldata description,
         uint proof,
         uint64 num_participants
     ) external onlyOwner {
         emit GiveawayCreated(s_giveaways.length);
         s_giveaways.push(
-            Giveaway(participants_list_link, proof, num_participants, 0, false)
+            Giveaway(description, proof, num_participants, 0, false)
         );
     }
 
@@ -92,6 +99,19 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
             "Giveaway hasn't completed yet. Check back later"
         );
         winner = s_giveaways[giveaway_number].winner;
+    }
+
+    /**
+     * get the link to the list of participants for a particular giveaway
+     */
+    function get_participants_list_link(string memory giveaway_number)
+        public
+        view
+        returns (string memory link)
+    {
+        link = string(
+            abi.encodePacked(s_link_prefix, giveaway_number, s_link_suffix)
+        );
     }
 
     // VRF
@@ -154,5 +174,13 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
             link.transfer(msg.sender, link.balanceOf(address(this))),
             "Unable to transfer"
         );
+    }
+
+    function change_link_prefix(string calldata new_prefix) public onlyOwner {
+        s_link_prefix = new_prefix;
+    }
+
+    function change_link_suffix(string calldata new_suffix) public onlyOwner {
+        s_link_suffix = new_suffix;
     }
 }

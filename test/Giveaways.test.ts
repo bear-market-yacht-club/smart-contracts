@@ -2,6 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import keccak256 from "keccak256";
+import * as fs from "fs";
 
 describe("Giveaways", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -13,6 +14,8 @@ describe("Giveaways", function () {
 
     const Giveaways = await ethers.getContractFactory("Giveaways");
     const giveaways = await Giveaways.deploy(
+      "https://bearmarketyachtclub.com/giveaways/",
+      ".txt",
       "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
       "0x99aFAf084eBA697E584501b8Ed2c0B37Dd136693"
     );
@@ -23,7 +26,12 @@ describe("Giveaways", function () {
   it("should create a giveaway and run it", async function () {
     const { giveaways } = await loadFixture(deploy);
 
-    const proof = keccak256("user1,5\nuser3,89\nuser2,82\nuser32,38");
+    const participants: string = fs
+      .readFileSync("./test/giveaway.txt", {
+        encoding: "utf-8",
+      })
+      .toString();
+    const proof = keccak256(participants);
 
     let giveaway_num: number = 0;
     const captureValue = (value: number) => {
@@ -32,14 +40,29 @@ describe("Giveaways", function () {
     };
 
     // get giveaway number we just created
-    await expect(giveaways.create_giveaway(proof, 4))
+    await expect(
+      giveaways.create_giveaway(
+        "Example giveaway description",
+        proof,
+        // minus 1 for the header
+        participants.split("\n").length - 1
+      )
+    )
       .to.emit(giveaways, "GiveawayCreated")
       .withArgs(captureValue);
+
+    let link = await giveaways.get_participants_list_link(
+      giveaway_num.toString()
+    );
+    expect(link).to.equal(
+      `https://bearmarketyachtclub.com/giveaways/${giveaway_num}.txt`,
+      "Incorrect giveaway link"
+    );
 
     await giveaways.run_giveaway(giveaway_num);
     console.log(
       "Winner:",
-      await (await giveaways.get_winner(giveaway_num)).toNumber()
+      (await giveaways.get_winner(giveaway_num)).toNumber()
     );
   });
 });
