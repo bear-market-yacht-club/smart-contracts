@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
 import * as fs from "fs";
 import keccak256 from "keccak256";
+import { argv } from "process";
 
 const create_giveaway = async (
   giveaway_num: number,
@@ -22,6 +23,9 @@ const create_giveaway = async (
   console.log("Number of participants:", num_participants);
 
   const Giveaways = await ethers.getContractAt("Giveaways", contractAddr);
+  if ((await Giveaways.s_giveaways(giveaway_num)).proof.gt(0)) {
+    throw new Error(`Giveaway '${giveaway_num}' already exists`);
+  }
   const tx = await Giveaways.create_giveaway(
     giveaway_description,
     ethers.BigNumber.from(proof),
@@ -31,4 +35,5 @@ const create_giveaway = async (
   console.log(await Giveaways.s_giveaways(giveaway_num));
 };
 
-create_giveaway(0, "Space Riders #0");
+// create_giveaway(0, "Space Riders #0");
+create_giveaway(parseInt(argv[2]), argv[3]);
