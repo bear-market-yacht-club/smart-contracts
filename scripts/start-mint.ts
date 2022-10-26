@@ -12,7 +12,7 @@ async function main() {
   )) as BMYC;
 
   // sleep until due time
-  const dueTime = "2022-10-26T16:19:59";
+  const dueTime = "2022-10-26T16:19:55";
   console.log("waiting…", Date.now() - new Date(dueTime).getTime());
   while (new Date(dueTime).getTime() > Date.now()) {
     await delay(1000);
