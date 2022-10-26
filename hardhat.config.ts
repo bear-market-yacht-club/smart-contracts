@@ -6,6 +6,14 @@ dotenv.config();
 const config: HardhatUserConfig = {
   solidity: "0.8.9",
   networks: {
+    ethereum: {
+      url: "https://mainnet.infura.io/v3/b04d2052bb564fe1b7013bd024f9c8ba",
+      accounts: [process.env.PRIVATE_KEY_ETH!],
+    },
+    goerli: {
+      url: "https://goerli.infura.io/v3/b04d2052bb564fe1b7013bd024f9c8ba",
+      accounts: [process.env.PRIVATE_KEY_ETH!],
+    },
     mumbai: {
       url: `https://rpc-mumbai.maticvigil.com`,
       accounts: [
@@ -21,6 +29,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      mainnet: process.env.ETHERSCAN_KEY!,
       polygon: process.env.POLYGON_KEY!,
     },
   },
