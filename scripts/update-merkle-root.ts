@@ -2,8 +2,8 @@
 
 import { ethers } from "hardhat";
 import { BMYC } from "../typechain-types";
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import { merkle } from "./merkle";
+import { exit } from "process";
 
 async function main() {
   const bmyc = (await ethers.getContractAt(
@@ -11,14 +11,12 @@ async function main() {
     "0x8e6F6a11E33375076FC76Bdb30FE218f588E5749"
   )) as BMYC;
 
-  // sleep until due time
-  const dueTime = "2022-10-26T16:19:59";
-  console.log("waiting…", Date.now() - new Date(dueTime).getTime());
-  while (new Date(dueTime).getTime() > Date.now()) {
-    await delay(1000);
-  }
-  await bmyc.startMint();
-  console.log("Token address:", bmyc.address);
+  const newMerkleRoot = (await merkle).getHexRoot();
+  console.log({ newMerkleRoot });
+
+  console.log(await bmyc.changeMerkleRoot(newMerkleRoot));
+
+  exit();
 }
 
 // We recommend this pattern to be able to use async/await everywhere

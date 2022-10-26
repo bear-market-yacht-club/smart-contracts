@@ -10,7 +10,10 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
 
   const BMYC = await ethers.getContractFactory("contracts/BMYC.sol:BMYC");
-  const bmyc = await BMYC.deploy((await merkle).getHexRoot(), "");
+  const bmyc = await BMYC.deploy(
+    (await merkle).getHexRoot(),
+    "ipfs://QmVhhan6qCkrnWeeBY9ebqrmohwT8C7SSLLLsJD9kKUiMF/"
+  );
 
   console.log("Token address:", bmyc.address);
   exit();
