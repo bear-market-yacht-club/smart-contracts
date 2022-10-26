@@ -105,7 +105,7 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
      * get the link to the list of participants for a particular giveaway
      */
     function get_participants_list_link(string memory giveaway_number)
-        public
+        external
         view
         returns (string memory link)
     {
@@ -168,7 +168,7 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
     /**
      * Allow withdraw of Link tokens from the contract
      */
-    function withdrawLink() public onlyOwner {
+    function withdrawLink() external onlyOwner {
         LinkTokenInterface link = LinkTokenInterface(s_linkAddress);
         require(
             link.transfer(msg.sender, link.balanceOf(address(this))),
@@ -176,11 +176,11 @@ contract Giveaways is VRFV2WrapperConsumerBase, ConfirmedOwner {
         );
     }
 
-    function change_link_prefix(string calldata new_prefix) public onlyOwner {
+    function change_link_prefix(string calldata new_prefix) external onlyOwner {
         s_link_prefix = new_prefix;
     }
 
-    function change_link_suffix(string calldata new_suffix) public onlyOwner {
+    function change_link_suffix(string calldata new_suffix) external onlyOwner {
         s_link_suffix = new_suffix;
     }
 }
