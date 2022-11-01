@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-gas-reporter";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -32,6 +33,9 @@ const config: HardhatUserConfig = {
       mainnet: process.env.ETHERSCAN_KEY!,
       polygon: process.env.POLYGON_KEY!,
     },
+  },
+  gasReporter: {
+    enabled: process.env.GAS_REPORT ? true : false,
   },
 };
 

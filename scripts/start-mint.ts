@@ -17,6 +17,7 @@ async function main() {
   while (new Date(dueTime).getTime() > Date.now()) {
     await delay(1000);
   }
+  await bmyc.teamMint();
   await bmyc.startMint();
   console.log("Token address:", bmyc.address);
 }
