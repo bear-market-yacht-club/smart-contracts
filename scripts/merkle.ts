@@ -11,7 +11,7 @@ declare module "knex/types/tables" {
   }
 }
 
-const merkle = (async () => {
+const merkle = async (table: string = "whitelists") => {
   const knex = Knex({
     client: "pg",
     connection: {
@@ -22,7 +22,7 @@ const merkle = (async () => {
     },
   });
 
-  const whitelistedAddresses = await knex<whitelists>("whitelists");
+  const whitelistedAddresses = await knex<whitelists>(table);
 
   const leaves = whitelistedAddresses.map((addr) =>
     keccak256(addr.address.toLowerCase())
@@ -45,6 +45,6 @@ const merkle = (async () => {
   //verification
   // console.log(merkleTree.verify(hexProof, claimingAddress, rootHash));
   // return { rootHash };
-})();
+};
 
 export { merkle };

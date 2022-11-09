@@ -1,17 +1,17 @@
 /* global ethers */
 
 import { ethers } from "hardhat";
-import { BMYC } from "../typechain-types";
 import { merkle } from "./merkle";
 import { exit } from "process";
+import fs from "fs";
 
 async function main() {
-  const bmyc = (await ethers.getContractAt(
-    "contracts/BMYC.sol:BMYC",
-    "0x8e6F6a11E33375076FC76Bdb30FE218f588E5749"
-  )) as BMYC;
+  const BMYC = await ethers.getContractFactory("BMYC");
+  let addresses: { proxy: string; admin: string; implementation: string } =
+    JSON.parse(fs.readFileSync("bmyc-addresses.json").toString());
+  const bmyc = await BMYC.attach(addresses.proxy);
 
-  const newMerkleRoot = (await merkle).getHexRoot();
+  const newMerkleRoot = (await merkle("whitelists")).getHexRoot();
   console.log({ newMerkleRoot });
 
   console.log(await bmyc.changeMerkleRoot(newMerkleRoot));

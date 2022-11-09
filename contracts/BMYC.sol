@@ -1,58 +1,63 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import "erc721a/contracts/ERC721A.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "erc721a-upgradeable/contracts/ERC721AUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract BMYC is ERC721A, Ownable {
-    uint public constant TOTAL_SUPPLY = 5555;
-    uint public constant MINT_PRICE = 6 ether / 100;
+contract BMYC is
+    OwnableUpgradeable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    ERC721AUpgradeable
+{
+    uint public TOTAL_SUPPLY;
     bytes32 public MERKLE_ROOT;
     string public BASE_URI;
-
-    uint64 public s_started_mint;
-    uint public s_mint_quantity = 10 + 1;
+    uint public MINT_QUANTITY;
     // whether an address already used up their whitelist
     mapping(address => bool) public s_used_whitelists;
 
-    constructor(bytes32 merkleRoot, string memory _baseUri)
-        ERC721A("Bear Market Yacht Club", "BMYC")
+    function initialize(bytes32 merkleRoot, string memory _baseUri)
+        external
+        initializerERC721A
+        initializer
     {
+        __Ownable_init();
+        __Pausable_init();
+        __ReentrancyGuard_init();
+        __ERC721A_init("Bear Market Yacht Club", "BMYC");
+        TOTAL_SUPPLY = 5555;
         MERKLE_ROOT = merkleRoot;
         BASE_URI = _baseUri;
+        MINT_QUANTITY = 3 + 1;
+        _pause();
     }
 
     function mint(uint256 quantity, bytes32[] calldata _merkleProof)
         external
         payable
+        whenNotPaused
+        nonReentrant
     {
-        require(s_started_mint > 0, "Cannot mint yet");
         require(
             _totalMinted() + quantity < TOTAL_SUPPLY + 1,
             "All NFTs have been minted"
         );
-        require(quantity < s_mint_quantity, "Can only mint up to 10 at a time");
+        require(quantity < MINT_QUANTITY, "Can only mint up to 3 at a time");
         require(quantity != 0, "Can't mint 0");
 
-        bool whitelisted = false;
-
-        // if whitelisted you can mint one free
-        // if quantity > 1, rest is paid in eth
-        if (!s_used_whitelists[msg.sender]) {
-            bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-            if (MerkleProof.verify(_merkleProof, MERKLE_ROOT, leaf)) {
-                whitelisted = true;
-                s_used_whitelists[msg.sender] = true;
-            }
-        }
-
-        // must pay up
+        require(!s_used_whitelists[msg.sender], "Already used whitelist");
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(
-            msg.value == MINT_PRICE * (quantity - (whitelisted ? 1 : 0)),
-            "not enough eth to mint"
+            MerkleProofUpgradeable.verify(_merkleProof, MERKLE_ROOT, leaf),
+            "You weren't whitelisted"
         );
+        s_used_whitelists[msg.sender] = true;
 
         _safeMint(msg.sender, quantity);
     }
@@ -71,32 +76,30 @@ contract BMYC is ERC721A, Ownable {
     }
 
     function teamMint() external onlyOwner {
-        _mint(owner(), 55);
+        _mint(owner(), 555);
     }
 
-    function startMint() external onlyOwner {
-        s_started_mint = uint64(block.timestamp);
+    // airdrop to existing holders
+    function airdrop(address[] memory to, uint[] memory amount)
+        external
+        onlyOwner
+        nonReentrant
+    {
+        require(
+            to.length == amount.length,
+            "to and amount must be the same length"
+        );
+        for (uint i = 0; i < to.length; i++) {
+            _mint(to[i], amount[i]);
+        }
     }
 
     function changeMintQuantity(uint newQuantity) external onlyOwner {
-        s_mint_quantity = newQuantity;
+        MINT_QUANTITY = newQuantity;
     }
 
     function changeMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
         MERKLE_ROOT = newMerkleRoot;
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        pure
-        override
-        returns (bool)
-    {
-        return
-            interfaceId == 0x7f5828d0 || // ERC165 Interface ID for ERC173
-            interfaceId == 0x80ac58cd || // ERC165 Interface ID for ERC721
-            interfaceId == 0x5b5e139f || // ERC165 Interface ID for ERC165
-            interfaceId == 0x01ffc9a7; // ERC165 Interface ID for ERC721Metadata
     }
 
     function withdrawToken(address token) public onlyOwner {
@@ -107,5 +110,10 @@ contract BMYC is ERC721A, Ownable {
 
     function withdrawEth() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function togglePause() public onlyOwner {
+        if (paused()) _unpause();
+        else _pause();
     }
 }

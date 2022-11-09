@@ -1,9 +1,7 @@
 /* global ethers */
 
 import { ethers, upgrades, run } from "hardhat";
-import { exit } from "process";
 import fs from "fs";
-import { merkle } from "./merkle";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -11,21 +9,16 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
 
   const BMYC = await ethers.getContractFactory("BMYC");
-  const bmyc = await upgrades.deployProxy(
-    BMYC,
-    [
-      (await merkle("whitelists_current_holders")).getHexRoot(),
-      "ipfs://QmVhhan6qCkrnWeeBY9ebqrmohwT8C7SSLLLsJD9kKUiMF/",
-    ],
-    { initializer: "initialize" }
-  );
-  await bmyc.deployed();
+  let addresses: { proxy: string; admin: string; implementation: string } =
+    JSON.parse(fs.readFileSync("bmyc-addresses.json").toString());
+  await upgrades.upgradeProxy(addresses.proxy, BMYC);
+  console.log("Upgraded");
 
-  const addresses = {
-    proxy: bmyc.address,
-    admin: await upgrades.erc1967.getAdminAddress(bmyc.address),
+  addresses = {
+    proxy: addresses.proxy,
+    admin: await upgrades.erc1967.getAdminAddress(addresses.proxy),
     implementation: await upgrades.erc1967.getImplementationAddress(
-      bmyc.address
+      addresses.proxy
     ),
   };
   console.log("Addresses:", addresses);
@@ -36,7 +29,6 @@ async function main() {
   } catch (e) {}
 
   fs.writeFileSync("bmyc-addresses.json", JSON.stringify(addresses));
-  exit();
 }
 
 // We recommend this pattern to be able to use async/await everywhere

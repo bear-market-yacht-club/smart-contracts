@@ -1,4 +1,5 @@
 import { HardhatUserConfig } from "hardhat/config";
+import "@openzeppelin/hardhat-upgrades";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-gas-reporter";
 import * as dotenv from "dotenv";
@@ -16,7 +17,7 @@ const config: HardhatUserConfig = {
       accounts: [process.env.PRIVATE_KEY_ETH!],
     },
     mumbai: {
-      url: `https://rpc-mumbai.maticvigil.com`,
+      url: `https://rpc-mumbai.matic.today`,
       accounts: [
         process.env.PRIVATE_KEY3!,
         process.env.PRIVATE_KEY!,
