@@ -8,9 +8,9 @@ declare module "knex/types/tables" {
   }
 }
 
-const whitelistedAddresses: string[] = [];
-
 (async () => {
+  const whitelistedAddresses: string[] = [];
+
   const knex = Knex({
     client: "pg",
     connection: {

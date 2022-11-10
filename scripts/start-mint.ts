@@ -1,6 +1,6 @@
 /* global ethers */
 
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 import fs from "fs";
 import { merkle } from "./merkle";
 
@@ -9,7 +9,9 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function main() {
   const BMYC = await ethers.getContractFactory("BMYC");
   let addresses: { proxy: string; admin: string; implementation: string } =
-    JSON.parse(fs.readFileSync("bmyc-addresses.json").toString());
+    JSON.parse(
+      fs.readFileSync(`bmyc-addresses-${network.name}.json`).toString()
+    );
   const bmyc = await BMYC.attach(addresses.proxy);
 
   // sleep until due time

@@ -1,6 +1,6 @@
 /* global ethers */
 
-import { ethers, upgrades, run } from "hardhat";
+import { ethers, upgrades, run, network } from "hardhat";
 import { exit } from "process";
 import fs from "fs";
 import { merkle } from "./merkle";
@@ -35,7 +35,10 @@ async function main() {
     await run("verify", { address: addresses.implementation });
   } catch (e) {}
 
-  fs.writeFileSync("bmyc-addresses.json", JSON.stringify(addresses));
+  fs.writeFileSync(
+    `bmyc-addresses-${network.name}.json`,
+    JSON.stringify(addresses)
+  );
   exit();
 }
 

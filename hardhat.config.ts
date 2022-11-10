@@ -6,7 +6,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.9",
+  solidity: { compilers: [{ version: "0.8.9" }, { version: "0.8.13" }] },
   networks: {
     ethereum: {
       url: "https://mainnet.infura.io/v3/b04d2052bb564fe1b7013bd024f9c8ba",
@@ -17,7 +17,7 @@ const config: HardhatUserConfig = {
       accounts: [process.env.PRIVATE_KEY_ETH!],
     },
     mumbai: {
-      url: `https://rpc-mumbai.matic.today`,
+      url: `https://polygon-mumbai.g.alchemy.com/v2/9EkGdZrIiVM1nqQe18gYtgR2__hobe_x`,
       accounts: [
         process.env.PRIVATE_KEY3!,
         process.env.PRIVATE_KEY!,

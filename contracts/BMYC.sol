@@ -8,19 +8,24 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/MerkleProofUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./libraries/OperatorFilterer.sol";
 
 contract BMYC is
     OwnableUpgradeable,
     PausableUpgradeable,
     ReentrancyGuardUpgradeable,
-    ERC721AUpgradeable
+    ERC721AUpgradeable,
+    OperatorFilterer
 {
     uint public TOTAL_SUPPLY;
     bytes32 public MERKLE_ROOT;
     string public BASE_URI;
     uint public MINT_QUANTITY;
-    // whether an address already used up their whitelist
+    // whether an address already used up their whitelist.
+    // deprecated
     mapping(address => bool) public s_used_whitelists;
+    // how many whitelists were used up
+    mapping(address => uint) public s_used_whitelist_count;
 
     function initialize(bytes32 merkleRoot, string memory _baseUri)
         external
@@ -31,11 +36,16 @@ contract BMYC is
         __Pausable_init();
         __ReentrancyGuard_init();
         __ERC721A_init("Bear Market Yacht Club", "BMYC");
+        __OperatorFilterer_init();
         TOTAL_SUPPLY = 5555;
         MERKLE_ROOT = merkleRoot;
         BASE_URI = _baseUri;
         MINT_QUANTITY = 3 + 1;
         _pause();
+    }
+
+    function initialize2() public reinitializer(2) {
+        __OperatorFilterer_init();
     }
 
     function mint(uint256 quantity, bytes32[] calldata _merkleProof)
@@ -51,20 +61,23 @@ contract BMYC is
         require(quantity < MINT_QUANTITY, "Can only mint up to 3 at a time");
         require(quantity != 0, "Can't mint 0");
 
-        require(!s_used_whitelists[msg.sender], "Already used whitelist");
+        require(
+            s_used_whitelist_count[msg.sender] + quantity < MINT_QUANTITY,
+            "Already used whitelist"
+        );
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(
             MerkleProofUpgradeable.verify(_merkleProof, MERKLE_ROOT, leaf),
             "You weren't whitelisted"
         );
-        s_used_whitelists[msg.sender] = true;
+        s_used_whitelist_count[msg.sender] += quantity;
 
         _safeMint(msg.sender, quantity);
     }
 
     // check whether a user has already used up their whitelist
-    function usedWhitelist(address user) external view returns (bool) {
-        return s_used_whitelists[user];
+    function usedWhitelist(address user) external view returns (uint) {
+        return s_used_whitelist_count[user];
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -115,5 +128,31 @@ contract BMYC is
     function togglePause() public onlyOwner {
         if (paused()) _unpause();
         else _pause();
+    }
+
+    // opensea
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override onlyAllowedOperator(from) {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override onlyAllowedOperator(from) {
+        super.safeTransferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) public override onlyAllowedOperator(from) {
+        super.safeTransferFrom(from, to, tokenId, data);
     }
 }
