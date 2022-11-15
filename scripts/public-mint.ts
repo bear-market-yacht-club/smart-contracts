@@ -1,9 +1,10 @@
 /* global ethers */
 
 import { ethers, network } from "hardhat";
-import { merkle } from "./merkle";
-import { exit } from "process";
 import fs from "fs";
+import { upgradeBMYC } from "./upgrade-bmyc";
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function main() {
   const BMYC = await ethers.getContractFactory("BMYC");
@@ -12,13 +13,19 @@ async function main() {
       fs.readFileSync(`bmyc-addresses-${network.name}.json`).toString()
     );
   const bmyc = await BMYC.attach(addresses.proxy);
-
-  const newMerkleRoot = (await merkle("whitelists")).getHexRoot();
-  console.log({ newMerkleRoot });
-
-  console.log(await bmyc.changeMerkleRoot(newMerkleRoot));
-
-  exit();
+  // add 30m
+  let dueTime = "2022-11-11T14:55:00";
+  console.log();
+  while (new Date(dueTime).getTime() > Date.now()) {
+    console.log(
+      "\x1b[A\x1b[G\x1b[Jwaiting…",
+      Date.now() - new Date(dueTime).getTime()
+    );
+    await delay(1000);
+  }
+  await upgradeBMYC().then(() =>
+    bmyc.airdrop(["0xb6FAEfd65b19aD86755f3C6cB4c018945B8f1139"], [150])
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

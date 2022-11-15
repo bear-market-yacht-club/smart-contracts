@@ -9,7 +9,7 @@ const config: HardhatUserConfig = {
   solidity: { compilers: [{ version: "0.8.9" }, { version: "0.8.13" }] },
   networks: {
     ethereum: {
-      url: "https://mainnet.infura.io/v3/b04d2052bb564fe1b7013bd024f9c8ba",
+      url: "https://rpc.ankr.com/eth",
       accounts: [process.env.PRIVATE_KEY_ETH!],
     },
     goerli: {

@@ -48,7 +48,7 @@ contract BMYC is
         __OperatorFilterer_init();
     }
 
-    function mint(uint256 quantity, bytes32[] calldata _merkleProof)
+    function mint(uint256 quantity)
         external
         payable
         whenNotPaused
@@ -65,18 +65,13 @@ contract BMYC is
             s_used_whitelist_count[msg.sender] + quantity < MINT_QUANTITY,
             "Already used whitelist"
         );
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        require(
-            MerkleProofUpgradeable.verify(_merkleProof, MERKLE_ROOT, leaf),
-            "You weren't whitelisted"
-        );
         s_used_whitelist_count[msg.sender] += quantity;
 
         _safeMint(msg.sender, quantity);
     }
 
     // check whether a user has already used up their whitelist
-    function usedWhitelist(address user) external view returns (uint) {
+    function usedMint(address user) external view returns (uint) {
         return s_used_whitelist_count[user];
     }
 

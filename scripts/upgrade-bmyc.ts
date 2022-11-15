@@ -3,7 +3,7 @@
 import { ethers, upgrades, run, network } from "hardhat";
 import fs from "fs";
 
-async function main() {
+export async function upgradeBMYC() {
   const [deployer] = await ethers.getSigners();
 
   console.log("Deploying contracts with the account:", deployer.address);
@@ -25,15 +25,15 @@ async function main() {
   };
   console.log("Addresses:", addresses);
 
-  //verify on etherscan
-  try {
-    await run("verify", { address: addresses.implementation });
-  } catch (e) {}
-
   fs.writeFileSync(
     `bmyc-addresses-${network.name}.json`,
     JSON.stringify(addresses)
   );
+
+  //verify on etherscan
+  try {
+    await run("verify", { address: addresses.implementation });
+  } catch (e) {}
 
   // new inits
   // const bmyc = await BMYC.attach(addresses.proxy);
@@ -42,7 +42,7 @@ async function main() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
+upgradeBMYC().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

@@ -23,7 +23,6 @@ const merkle = async (table: string = "whitelists") => {
   });
 
   const whitelistedAddresses = await knex<whitelists>(table);
-
   const leaves = whitelistedAddresses.map((addr) =>
     keccak256(addr.address.toLowerCase())
   );
@@ -35,16 +34,17 @@ const merkle = async (table: string = "whitelists") => {
   return merkleTree;
 
   // client side
-  // const claimingAddress = keccak256(whitelistedAddresses[4]); //msg.sender
   // const claimingAddress = keccak256(
   //   "0x2546BcD3c84621e976D8185a91A922aE77ECEc30"
   // ); //msg.sender
   // const hexProof = merkleTree.getHexProof(claimingAddress);
   // console.log({ hexProof });
+  // process.exit();
 
   //verification
   // console.log(merkleTree.verify(hexProof, claimingAddress, rootHash));
   // return { rootHash };
 };
 
+// merkle();
 export { merkle };
